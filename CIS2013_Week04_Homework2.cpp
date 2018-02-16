@@ -17,7 +17,15 @@ string currentCard[2];
 string deck[520][2];
 
 int dealIteration = 0;
-int aceCounter = 0;
+
+int pAceTotal = 0;
+int dAceTotal = 0;
+
+int pAceUsed = 0;
+int dAceUsed = 0;
+
+int playerAceModifier = 0;
+int dealerAceModifier = 0;
 
 string playerHand[20];
 string dealerHand[20];
@@ -33,13 +41,27 @@ void clearConsole()
 }
 
 //Count the numnber of aces
-void countAces()
+void countPlayerAces()
 {
+	pAceTotal = 0;
     for(int i = 0; i < 20; i=i+2)
     {
         if(playerHand[i] == "Ace")
         {
-            aceCounter++;
+            pAceTotal++;
+        }
+            
+    }
+}
+
+void countDealerAces()
+{
+	dAceTotal = 0;
+    for(int i = 0; i < 20; i=i+2)
+    {
+        if(dealerHand[i] == "Ace")
+        {
+            dAceTotal++;
         }
             
     }
@@ -121,14 +143,26 @@ public:
 			{
 				handTotal += 2;
 			}
-
 		}
+
+
+		if(playerAceModifier != 0)
+		{
+			handTotal = handTotal - playerAceModifier;
+			playerAceModifier -= 10;			
+		}
+
+		//Display total value of hand
+
+		//cout << "\n\n Ace used : " << pAceUsed << " \n\n";
+
+		cout << endl << "Total:" << handTotal - (pAceUsed * 10) << endl;
 
 	}
 	//Displays the player's hand
 	void displayHand()
 	{
-		cout << "Your hand:\n";
+		cout << "\nYour hand:\n\n";
 
 		for (int i = 0; i < 20; i += 2)
 		{
@@ -516,7 +550,7 @@ public:
 	}
 
 
-	void calcDealerHand()
+	void calcHand()
 	{
 		handTotal = 0;
 		for (int i = 0; i < 20; i += 2)
@@ -587,7 +621,8 @@ public:
 			}
 
 		}
-		
+		handTotal = handTotal - dealerAceModifier;
+		cout << endl << "Total:" << handTotal << endl;
 	}
 };
 
@@ -606,96 +641,91 @@ void toUpperCase(string& s)
 //Determine action based on user decision
 void determineAction(Player player, Dealer dealer)
 {
+	if(  (player.handTotal - (pAceUsed * 10) ) > 21)
+	{
+		clearConsole();
+		player.displayHand();
+		player.calcHand();
+		cout << "\n\nYou lose!\n\n";
+		return;
+	}
+
+	clearConsole();
+	player.displayHand();
+	player.calcHand();
+	dealer.displayHand();
+	dealer.calcHand();
+
 	//Get user input 
-	cout << "What would you like to do? (stay/hit)" << endl;
+	cout << "\nWhat would you like to do? (stay/hit)" << endl;
 	cin >> player.decision;
 	string decision = player.decision;
 
 
 	toUpperCase(decision);
 
-	if(decision == "HELP")
-	{
-		cout << "Ace Counter: " << endl;
-		
-		countAces();
-		cout << aceCounter;
-		
-	}
-
-
-	if(decision == "STAY")
-	{
-	    while(dealer.handTotal < 17)
-	    {
-	        dealer.receiveCard();
-		    dealer.displayHand();
-	        dealer.calcDealerHand();
-	        cout << endl << "Total:" << dealer.handTotal << endl;
-    	    cout << "\n-----------------" << endl;
-	    }
-	    
-	    
-	    
-	    //Determines winner or loser after stay
-	   if(player.handTotal > 21)
-	   {
-	       cout << "You lose!";
-	   }
-	   else
-	   {
-	       if(dealer.handTotal > 21)
-	       {
-	           cout << "You win!";
-	       }
-	       else
-	       {
-	           if(player.handTotal > dealer.handTotal)
-	           {
-	               cout << "You win!";
-	           }
-	           else
-	           {
-	               cout << "You lose!";
-	           }
-	       }
-	   }
-	   
-	   
-	   
-	    
-	}
-
-	if(decision == "HIT")
+	//Staying decision
+	if(decision == "STAY" || decision == "S" || decision == "ST" || decision == "STA")
 	{
 		clearConsole();
-		dealer.dealCard();
 		player.displayHand();
-		player.calcHand();
-
-		//Display total value of hand
-		cout << endl << "Total:" << player.handTotal << endl;
-		cout << "\n-----------------" << endl;
-
-    	dealer.displayHand();
-    	dealer.calcDealerHand();
-    	cout << endl << "Total:" << dealer.handTotal << endl;
-    	cout << "\n-----------------" << endl;
-
-
-		if(player.handTotal > 21)
+		player.calcHand();	
+		while(dealer.handTotal < 17)
 		{
-			cout << "You lose";
+			clearConsole();
+			player.displayHand();
+			player.calcHand();	
+			dealer.receiveCard();
+			dealer.displayHand();
+			dealer.calcHand();
+			countDealerAces();
+
+			if(dealer.handTotal > 21 && dAceTotal != dAceUsed)
+			{
+				dealerAceModifier += 10;
+				dAceUsed++;
+				dealer.calcHand();
+			}
+		}
+
+		if(dealer.handTotal > 21)
+		{
+			cout << "\nYou win!\n";
+			return;
+		}
+
+		if( (player.handTotal - (pAceUsed * 10) ) > dealer.handTotal && (player.handTotal - (pAceUsed * 10) ) <= 21 && dealer.handTotal <= 21)
+		{
+			cout << "\nYou win!\n";
+			return;
 		}
 		else
 		{
-
-			determineAction(player, dealer);
+			cout << "\nYou lose!\n";
 		}
+	}
+
+
+	//Hitting decision
+	if(decision == "HIT" || decision == "HI" || decision == "H")
+	{
+		dealer.dealCard();
+		player.displayHand();
+		player.calcHand();
+		countPlayerAces();
+
+		if(player.handTotal > 21 && pAceTotal != pAceUsed)
+		{
+			playerAceModifier += 10;
+			pAceUsed++;
+			player.calcHand();
+		}
+
+		determineAction(player, dealer);
 
 	}
 
-	
+
 }
 
 
@@ -706,7 +736,11 @@ void newGame()
 {
 	//Use time as a seed for the RNG
 	srand(time(NULL));
-
+	
+	clearConsole();
+	cout << "                                 " 
+		 << "Welcome to BlackJack.\n\n\n\n" << endl;
+	system("pause");
 	//Create a dealer and player object
 	Player player;
 	Dealer dealer;
@@ -714,28 +748,27 @@ void newGame()
 	//Create the deck of cards
 	dealer.createDeck();
 
-	//Deal 2 cards and display them to the user
+
+
+	//Deals 2 cards to the player and display the user's hand
 	dealer.dealCard();
 	dealer.dealCard();
 	player.displayHand();
 
 	//Calculate the total value of the player's hand
 	player.calcHand();
+	countPlayerAces();
 
-	//Display total value of hand
-	cout << endl << "Total:" << player.handTotal << endl;
-	cout << "\n-----------------" << endl;
 
-	//Dealer gets a card and displays hand
+	//Dealer gets a card and displays hand (1 card)
 	dealer.receiveCard();
 	dealer.displayHand();
-	dealer.calcDealerHand();
-	cout << endl << "Total:" << dealer.handTotal << endl;
-	cout << "\n-----------------" << endl;
-
-
-
 	
+	//Calculate the total value of the dealer's hand
+	dealer.calcHand();
+	countDealerAces();
+
+	//Decision Tree	for the rest of game
 	determineAction(player, dealer);
 
 }
@@ -745,6 +778,5 @@ void newGame()
 int main()
 {
 	newGame();
-
 	return 0;
 }
