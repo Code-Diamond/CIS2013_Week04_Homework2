@@ -738,7 +738,7 @@ void newGame()
 	srand(time(NULL));
 	
 	clearConsole();
-	cout << "                                 " 
+	cout << "                              " 
 		 << "Welcome to BlackJack.\n\n\n\n" << endl;
 	system("pause");
 	//Create a dealer and player object
