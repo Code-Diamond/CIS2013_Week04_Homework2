@@ -538,7 +538,7 @@ public:
 
 	void displayHand()
 	{
-		cout << "\nDealer's hand:\n";
+		cout << "\n\n\nDealer's hand:\n\n";
 		for (int i = 0; i < 20; i += 2)
 		{
 			if (dealerHand[i] != "" && dealerHand[i + 1] != "")
